@@ -7,7 +7,7 @@ DATA_LINK = f"http://www.omdbapi.com/?apikey={API_KEY}&t="
 
 
 class StorageJson(IStorage):
-    # Stores movies CRUD data in a CSV file.
+    # Stores movies CRUD data in a Json file.
     def __init__(self, file_path):
         self.file_path = file_path
 
