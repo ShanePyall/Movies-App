@@ -1,6 +1,3 @@
-import json
-from random import randint
-
 
 class MovieApp:
     # Creates an app that allows user to interact with movies in a file.
@@ -43,8 +40,9 @@ class MovieApp:
     def _command_add_movies(self):
         # Adds a new movie to data-base.
         title = input("Enter new movie name: ")
+        note = input("Would you like to leave a comment about this movie(If not, please leave empty): ")
         title.replace(" ", "+")
-        return self._storage.add_movie(title)
+        return self._storage.add_movie(title, note)
 
     def _command_delete_movies(self):
         # Removes movie from database
@@ -60,162 +58,24 @@ class MovieApp:
 
     def _command_stats(self):
         # Calculates and Displays stats of all movies.
-        my_list = []
-        temp_list = []
-
-        with open(self._storage.file_path, "r") as json_movie_storage:
-            movies = json.loads(json_movie_storage.read())
-
-        for movie in movies:
-            temp_list.append(movie['Rating'])
-
-        for items in temp_list:
-            if '/' in str(items):
-                items = float(items.split('/')[0])
-            my_list.append(items)
-
-        list2 = my_list.copy()  # Need to make a copy so median of list is accurate.
-        list2.sort()  # Needed to calculate best and worst
-
-        # Average solving and assigning
-        my_sum = 0
-        for item in my_list:
-            my_sum += item
-        average_rating = my_sum / len(my_list)
-
-        # Prep to work out the median
-        if len(my_list) % 2 == 0:
-            middle_of_list = int((len(my_list) / 2) - 1)
-        else:
-            middle_of_list = int((len(my_list) - 1) / 2)
-
-        # Get best and worst movie
-        best_movie = None
-        worst_movie = None
-        for movie in movies:
-            if movie["Rating"][:3] == str(list2[-1]):
-                best_movie = movie["Title"]
-            if movie["Rating"][:3] == str(list2[0]):
-                worst_movie = movie["Title"]
-
-        # Store results in message
-        message = f'''\nAverage rating: {round(average_rating, 1)}
-Median rating: {my_list[middle_of_list]}
-Best movie: {best_movie}, {list2[-1]}
-Worst movie: {worst_movie}, {list2[0]}'''
-
-        return message
+        return self._storage.command_stats()
 
     def _command_random_movie(self):
         # Selects a random movie from list, using randint.
-        with open(self._storage.file_path, "r") as json_movies_storage:
-            movies = json.loads(json_movies_storage.read())
-
-        movie = movies[randint(0, len(movies) - 1)]
-        message = f"\nYour movie for tonight is: {movie['Title']}, it\'s rated {movie['Rating']}"
-        return message
+        return self._storage.command_random_movie()
 
     def _command_search_movie(self):
         # Finds movie user searched for (if in data-base).
         search_input = input("\nEnter part of a movies name: ")
-        message = "Movie was not found in our list, why not add it!"
-
-        with open(self._storage.file_path, "r") as json_movie_storage:
-            movies = json.loads(json_movie_storage.read())
-
-        for movie in movies:
-            if search_input in movie['Title']:  # Allows for capitalisation errors
-                message = f"{movie['Title']}: {movie['Rating']}\n"
-
-        return message
+        return self._storage.command_search_movie(search_input)
 
     def _command_movies_sorted_by_rating(self):
         # Stores movie ratings and keys into list, sorts by highest.
-
-        with open(self._storage.file_path, "r") as json_movie_storage:
-            movies = json.loads(json_movie_storage.read())
-
-        temp_list = []
-        value_list = []
-        for movie in movies:
-            temp_list.append(movie['Rating'])
-
-        for items in temp_list:
-            if '/' in str(items):
-                items = float(items.split('/')[0])
-            value_list.append(items)
-
-        value_list.sort(reverse=True)
-
-        key_list = []
-        for item in value_list:
-            for movie in movies:
-                if '/' in str(movie['Rating']):
-                    target = str(movie['Rating'])[:3]
-                else:
-                    target = movie['Rating']
-
-                if float(target) == item:
-                    key_list.append(movie['Title'])
-
-        key_list = list(dict.fromkeys(key_list))
-        message = ''
-        for num in range(len(key_list)):
-            message += f"\n{key_list[num]}: {value_list[num]}"
-
-        return message
+        return self._storage.command_movies_sorted_by_rating()
 
     def _command_generate_site(self):
         # Generates html movie website
-        with open("bones/index_template.html", "r") as readable:
-            html_code_string = readable.read()
-
-        with open("bones/style.css", "r") as readable:
-            style_sheet = readable.read()
-
-        with open("bones/style.css", "w") as writable:
-            writable.write(style_sheet)
-
-        with open(self._storage.file_path, "r") as readable:
-            movies = json.loads(readable.read())
-
-        res = ''
-        img_link = None
-        for movie in movies:
-
-            try:
-                img_link = movie["Poster URL"]
-
-            except KeyError:
-                img_link = """https://d32qys9a6wm9no.cloudfront.net/images\
-    /others/not_available/poster_500x735.png?t=1683418449"""
-
-            finally:
-                movie_title = movie["Title"]
-                movie_year = movie["Year"]
-                # movie_rating = movie["Rating"]
-                if "Note" in movie:
-                    movie_note = movie["Note"]
-                else:
-                    movie_note = ''
-
-                start = f'<li><div class="movie" >'
-
-                img_text = f'<img class="movie-poster" src="{img_link}" title="{movie_note}"/>'
-                title_text = f'<div class="movie-title">{movie_title}</div>'
-                year_text = f'<div class="movie-year">{movie_year}</div>'
-
-                end = f'</div></li><br>'
-                res += start + img_text + title_text + year_text + end
-
-        result = html_code_string.replace("__TEMPLATE_TITLE__", "Mock-Buster!")
-        final = result.replace("__TEMPLATE_MOVIE_GRID__", res)
-
-        with open("movie_web_app.html", "w") as website_maker:
-            website_maker.write(final)
-
-        message = "Website was generated successfully!"
-        return message
+        return self._storage.command_generate_site()
 
     def run(self):
         # Runs the program until user enters 0 or force stopped
